@@ -13,4 +13,5 @@ The web application will include the following features:
 **This project is part of the Python Backend Programming course from DCI Institute:**  
 [DCI Python Course](https://digitalcareerinstitute.org/courses/python-backend-programming/)
 
-
+**License**  
+[MIT](https://github.com/nataliedutz/warehouse_project/blob/main/LICENSE.txt)
