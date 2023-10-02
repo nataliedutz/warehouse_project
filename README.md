@@ -8,12 +8,14 @@ The web application will include the following features:
 - Maintain the stock of a warehouse.
 - Order items from the warehouse.
 - Log actions from users.
-- Reporting.
+- Reporting.  
+  
 
-### This project is part of the Python Backend Programming course from DCI Institute:
-[DCI Python Course](https://digitalcareerinstitute.org/courses/python-backend-programming/)
-
-### License:
+**This project is part of the Python Backend Programming course from DCI Institute:**  
+[DCI Python Course](https://digitalcareerinstitute.org/courses/python-backend-programming/)  
+  
+  
+**License:**  
 [MIT](https://github.com/nataliedutz/warehouse_project/blob/main/LICENSE.txt)
 
 
