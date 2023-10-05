@@ -22,6 +22,7 @@ def show_menu():
         print(f"Items in warehouse 1: {warehouse1}")
         print(f"Items in warehouse 2: {warehouse2}")
     elif picked_number == "2":
+        # Use of lower() for input and lists to avoid errors
         search_item = input("What is the name of the item you are looking for? ").lower()
         count_in_warehouse1 = sum(1 for item in warehouse1 if item.lower() == search_item)
         count_in_warehouse2 = sum(1 for item in warehouse2 if item.lower() == search_item)
