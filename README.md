@@ -22,11 +22,10 @@ The web application will include the following features:
 ## Development Setup
 
 ### Virtual Environment  
-This project uses a Python virtual environment for managing dependencies.
+This project uses a Python virtual environment for managing dependencies.  
 
-### Getting Started
-
-This project uses a Python virtual environment for managing dependencies. Ensure you have Python 3.x and [Visual Studio Code](https://code.visualstudio.com/) installed.
+### Getting started  
+Ensure you have [Python 3.x](https://www.python.org/downloads/) and [Visual Studio Code](https://code.visualstudio.com/) installed.
 
 ### Development with Visual Studio Code
 - Open the project folder in Visual Studio Code.
