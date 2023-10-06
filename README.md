@@ -33,4 +33,4 @@ Ensure you have [Python 3.x](https://www.python.org/downloads/) and [Visual Stud
 
 ### Running the Project
 - Activate your virtual environment.
-- Run your Python scripts.
+- Run the Python scripts.
