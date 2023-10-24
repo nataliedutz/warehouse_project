@@ -1,200 +1,234 @@
-from data import stock
 from datetime import datetime
+
 from collections import Counter
 
-# Initialize dict for handling of warehouses
-# warehouse_stock = {1: 0, 2: 0, "Unknown Warehouse": 0}
-warehouse_stock = {}
-session_activities = []
+from functools import wraps
 
-def get_username():
-    '''This function gets the username'''
-    username = input("Welcome, what is your user name? ")
-    return username
+from data import stock, personnel
 
-# Greet the user
-def greet(username):
-    '''This function greets the user.'''
-    return f"Hello, {username}!"
+class WarehouseManagementSystem:
+    '''This class contains all the functions for the warehouse managment system.'''
+    def __init__(self, stock, personnel):
+        self.stock = stock
+        self.personnel = personnel
+        self.warehouse_stock = {}
+        self.actions = []
+        self.username = None
 
-# Show the menu and ask to pick a choice
-def get_selected_operation(stock, warehouse_stock):
-    '''This function shows the menu and asks the user to make a choice between 3 operations'''
-    print("What do you want to do?")
-    print("1. List items by warehouse")
-    print("2. Search an item and place an order")
-    print("3. Browse by category")
-    print("4. Quit")
+    def get_username(self):
+        '''This function gets the username via user input.'''
+        return input("Welcome, what is your user name? ")
 
-    picked_number = input("Please select by typing 1, 2, 3 or 4: ")
-    # User picks option 1:
-    if picked_number == "1":
-        return list_items_by_warehouse(stock)
-        
-    # User picks option 2:
-    elif picked_number == "2":
-        search_item = input("What is the name of the item you are looking for? ").lower()
-        found_items = search_an_item(stock, search_item, warehouse_stock)
-        if found_items:
-            print_search_results(found_items, warehouse_stock)
-            order_an_item(found_items, search_item, warehouse_stock)
-        else:
-            print("No items found.")
-    
-        
-    elif picked_number == "3":
-        return browse_by_category(stock)
-        
-    elif picked_number == "4":
-        pass    
-    
-    else:
-        print("******************************************************")
-        print("No valid input, please enter a number between 1 and 4.")
-        print("******************************************************")
+    def greet_user(self, username):
+        '''This function greets the user.'''
+        print(f"Hello, {username}!")
 
+    def authenticate_user(self):
+        '''This function checks if user ise employee before placing an order, 
+        because only employees are allowed to place an order.'''
+        password = input("Please, type your employee password: ")
+        for user in self.personnel:
+            if user["user_name"] == self.username and user["password"] == password:
+                return True
+        return False
 
-def list_items_by_warehouse(stock):
-    '''This function prints a list of all items in stock'''
-    # Initialize variables for amounts in both warehouses
-    warehouse_amounts = {}    #available_amount_warehouse1 = 0
-    #available_amount_warehouse2 = 0
-    # For loop iterating over all items in stock
-    for item in stock:
-        warehouse_id = item["warehouse"]
-        warehouse_stock[warehouse_id] = warehouse_stock.get(warehouse_id, 0) + 1
-        print(f"{item['state']} {item['category']}, Warehouse {warehouse_id}")
-    for warehouse_id, available_amount in warehouse_amounts.items():
-        print(f"Items in warehouse {warehouse_id}: {available_amount}")
-    return "Listed items by warehouse."
-   
-
-def search_an_item(stock, search_item, warehouse_stock):
-    # Use of lower() for input and lists to avoid errors
-    #search_item = search_item.lower()
-    # Initialize list for all search_items found in stock
-    found_items = [] 
-    # For loop iterating over all items in stock:
-    for item in stock:
-        state_lower = item["state"].lower()
-        category_lower = item["category"].lower()
-        # Get name of item to compare with user input
-        concatenated_item = state_lower + " " + category_lower 
-        # Check if user input (search_item) is equal to a concatenated_item
-        if search_item == concatenated_item: 
-            # If it is equal, add this item to the list found_items
-            found_items.append(item) 
-            # Update warehouse stock
-            warehouse_id = item['warehouse']
-            warehouse_stock[warehouse_id] = warehouse_stock.get(warehouse_id, 0) + 1
-    if found_items:
-        print(f"Found {len(found_items)} item(s) matching '{search_item}' in stock.")
-    else:
-        print(f"No items found matching '{search_item}' in stock.")
-    return found_items
-
-def print_search_results(found_items, warehouse_stock, search_item):
-    if found_items:
-        # Count all items in found_items list
-        total_count = len(found_items) 
-        print(f"Amount available: {total_count}.")
-        print("Location:")
-        current_datetime = datetime.now()
-        # For loop iterating over all items in found_items list:
-        for item in found_items:
-            # Initialize datetime to count days in stock
-            stock_date = datetime.strptime(item["date_of_stock"], "%Y-%m-%d %H:%M:%S") 
-            # Calcualate days in stock
-            days_in_stock = (current_datetime - stock_date).days
-            
-            for warehouse_id in warehouse_stock:
-                if item['warehouse'] == warehouse_id:
-                    warehouse_stock[warehouse_id] += 1
-                    print(f"- Warehouse {warehouse_id} (in stock for {days_in_stock} days)")
-                    session_activities.append(f"Found {total_count} item(s) matching '{search_item}' in stock.")
-
-        max_availability_warehouse = max(warehouse_stock, key=warehouse_stock.get)
-        max_availability = warehouse_stock[max_availability_warehouse]
-        print(f"Maximum availability: {max_availability} in Warehouse {max_availability_warehouse}")
-        return warehouse_stock
-    return warehouse_stock
-
-def order_an_item(found_items, search_item, warehouse_stock):
-    total_count = len(found_items)
-    max_availability_warehouse = max(warehouse_stock, key=warehouse_stock.get)
-    max_availability = warehouse_stock[max_availability_warehouse]
-    order_description = ""
-
-    if total_count > 0:
-        ask_order = input(f"Do you want to place an order for the item {search_item}? (y/n)") 
-        if ask_order.lower() == "y": 
-            order_amount = int(input(f"How many items of {search_item} do you want to order?")) 
-            if order_amount <= total_count and order_amount <= max_availability: 
-                warehouse_stock[max_availability_warehouse] -= order_amount  # Update the warehouse stock
-                order_description = f"Ordered {order_amount} '{search_item}' from Warehouse {max_availability_warehouse}."
+    def employee_only(func):
+        '''This is a decorator used for functions only available to employees'''
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            if self.authenticate_user():
+                return func(self, *args, **kwargs)
             else:
-                print("***********************************************************")
-                if order_amount > max_availability:
-                    print(f"Unfortunately, the item is not available {order_amount} times in Warehouse {max_availability_warehouse}.")
-                else:
-                    print(f"Unfortunately, the item is not available {order_amount} times.")
-                print("***********************************************************")
-                ask_order_max = input(f"Do you want to order the maximum amount of {total_count}? (y/n)") 
-                if ask_order_max.lower() == "y" and total_count <= max_availability: 
-                    warehouse_stock[max_availability_warehouse] -= total_count  # Update the warehouse stock
-                    order_description = f"Ordered {total_count} '{search_item}' from Warehouse {max_availability_warehouse}."
-                else:
-                    order_description = f"Attempted to order {order_amount} '{search_item}' but it was unavailable."
+                print("Authentication failed. Only employees can place an order.")
+        return wrapper
+    
+    def list_items_by_warehouse(self):
+        '''This function prints a list of the items by warehouse
+        with information about how long they have been in stock.'''
+        current_datetime = datetime.now()  # Get the current date and time
+        warehouses = {}  # Initialize a dictionary to store items grouped by warehouse
+
+        for item in self.stock:
+            warehouse_id = item["warehouse"]
+            if warehouse_id not in warehouses:
+                warehouses[warehouse_id] = []
+            warehouses[warehouse_id].append(item)
+
+        for warehouse_id, items in warehouses.items():
+            print(f"Items in warehouse {warehouse_id}:")
+            for item in items:
+                stock_date = datetime.strptime(item["date_of_stock"], "%Y-%m-%d %H:%M:%S")
+                days_in_stock = (current_datetime - stock_date).days
+                print(f"- {item['state']} {item['category'].lower()} (in stock for {days_in_stock} days)")
+
+            total_items_in_warehouse = len(items)
+            print(f"Total items in warehouse {warehouse_id}: {total_items_in_warehouse}")
+
+        total_items = sum(len(items) for items in warehouses.values())
+        print(f"Total items in all warehouses: {total_items}")
+        self.actions.append("Listed items by warehouse.")
+
+    def search_an_item(self, search_item):
+        '''The user searches for an item'''
+        search_item_lower = search_item.lower()  # Convert search_item to lowercase once
+        found_items = []
+        for item in self.stock:
+            item_name = f"{item['state'].lower()} {item['category'].lower()}"
+            if search_item_lower in item_name:
+                found_items.append(item)
+        return found_items
+
+    def update_warehouse_stock(self, found_items):
+        '''This function counts the items in the warehouse'''
+        for item in found_items:
+            warehouse_id = item["warehouse"]
+            self.warehouse_stock[warehouse_id] = self.warehouse_stock.get(warehouse_id, 0) + 1
+
+    def search_item(self):
+        '''The user searches for an item and orders an item'''
+        search_item = input("What is the name of the item? ")
+        found_items = self.search_an_item(search_item)
+
+        if found_items:
+            warehouse_items = {}  # Dictionary to store items organized by warehouse
+            for item in found_items:
+                warehouse_id = item["warehouse"]
+                if warehouse_id not in warehouse_items:
+                    warehouse_items[warehouse_id] = []
+                warehouse_items[warehouse_id].append(item)
+
+            print(f"{search_item}: Available {len(found_items)} times in total.")
+            for warehouse_id, items in warehouse_items.items():
+                print(f"Warehouse {warehouse_id}: Available {len(items)} times.")
+                for item in items:
+                    stock_date = datetime.strptime(item["date_of_stock"], "%Y-%m-%d %H:%M:%S")
+                    days_in_stock = (datetime.now() - stock_date).days
+                    print(f"- {item['state']} {item['category']} (in stock for {days_in_stock} days)")
+
+            # Update warehouse stock with the found items
+            self.update_warehouse_stock(found_items)
+            ask_for_order = input(f"Do you want to place an order for {search_item}?(y/n)")
+            if ask_for_order.lower() == "y":
+                self.order_an_item(search_item, found_items)
         else:
-            order_description = f"Did not place an order for '{search_item}'."
-    else:
-        order_description = f"'{search_item}' is not in stock."
+            print(f"No items found matching '{search_item}' in stock.")
 
-    session_activities.append(order_description)  # Add order description to session activities
-    return order_description, warehouse_stock
+    @employee_only
+    def order_an_item(self, search_item, found_items):
+        '''The user orders an item from the warehouse; includes an authority check,
+        because only employees have permission to place an order'''
+        total_count = len(found_items)
+        if total_count > 0:
+            max_availability_warehouse = max(self.warehouse_stock, key=self.warehouse_stock.get)
+            max_availability = self.warehouse_stock[max_availability_warehouse]
 
+            # Authentication check
+            if not self.authenticate_user():
+                print("Authentication failed. Placing order denied.")
+                return           
+            warehouse_id = found_items[0]["warehouse"]
 
-def browse_by_category(stock):
-    categories = [item["category"] for item in stock]
-    # Count how many items are available of given category
-    category_counts = Counter(categories)
-    # Print available amount for each category that exists
-    for index_number, (category, count) in enumerate(category_counts.items(), start=1):
-        print(f"{index_number}. {category} ({count} available)")
-    while True:
-        try:
-            category_choice = int(input("Type the number of the category to browse: "))
-            if 1 <= category_choice <= len(category_counts):
-                # Get a list of category names from the category_counts dict, 
-                # Select the category at the index corresponding to user's chooise (list index begins with 0)
+            # Ask for order amount with error handling
+            while True:
+                try:
+                    order_amount = int(input(f"How many items of {search_item} do you want to order?"))
+                    if order_amount <= 0:
+                        print("Invalid quantity. Please enter a positive number.")
+                    elif order_amount <= max_availability:
+                        print(f"You have ordered {order_amount} of {search_item}.")
+                        self.warehouse_stock[warehouse_id] -= order_amount
+                        self.actions.append(f"You have ordered {order_amount} {search_item}.")
+                    elif order_amount > max_availability:
+                        print("***********************************************************")
+                        print(f"Unfortunately, the item is not available {order_amount} times.")
+                        print("***********************************************************")
+                        ask_order_max = input(f"Do you want to order the maximum amount of {total_count}? (y/n)")
+                        if ask_order_max.lower() == "y":
+                            warehouse_id = found_items[0]["warehouse"]
+                            order_amount = min(order_amount, max_availability)  # Ensure ordering available items
+                            self.warehouse_stock[warehouse_id] -= order_amount
+                            print(f"You have ordered {total_count} {search_item}.")
+                            self.actions.append(f"Ordered {total_count} of the item {search_item}.")
+
+                        else:
+                            print("Order canceled.")
+                    else:
+                        print("Order canceled.")
+                except ValueError:
+                    print("Invalid input. Please enter a valid integer.")
+                else:
+                    break  # Exit the loop if valid input is provided
+        else:
+            print(f"No items found matching '{search_item}' in stock.")
+
+    def browse_by_category(self):
+        '''The user can choose a category by typing a number,
+        and then browse all products in that category.'''
+        categories = [item["category"] for item in self.stock]
+        category_counts = Counter(categories)
+
+        for index, (category, count) in enumerate(category_counts.items(), start=1):
+            print(f"{index}. {category} ({count} available)")
+
+        while True:
+            try:
+                category_choice = int(input("Type the number of the category to browse: "))
                 chosen_category = list(category_counts.keys())[category_choice - 1]
                 break
-            else:
+            except (ValueError, IndexError):
                 print("Invalid choice. Please select a valid number.")
-        except ValueError:
-                print("Invalid input. Please enter a number.")
 
-    print(f"List of {chosen_category} available:")
-    for item in stock:
-        if item["category"] == chosen_category:
-            print(f"{item['state']} {item['category']}, Warehouse", item['warehouse'])
-    return f"Browsed items in the category '{chosen_category}'."
+        print(f"List of {chosen_category} available:")
+        for item in self.stock:
+            if item["category"] == chosen_category:
+                print(
+                    f"{item['state']} {item['category']}, Warehouse {item['warehouse']}")
+        self.actions.append(f"Browsed items in category {chosen_category}.")
 
-    
-# Define the username and call the functions
-username = get_username()
-print(greet(username))
-# Initialize a list for the record of actions taken during the session
-session_actions = []
-while True:
-    operation_description = get_selected_operation(stock, warehouse_stock)
-    session_actions.append(operation_description)
+    def run(self):
+        '''This function executes the warehouse management system application.'''
+        self.username = self.get_username()
+        self.greet_user(self.username)
+        while True:
+            print("What do you want to do?")
+            print("1. List items by warehouse")
+            print("2. Search an item and place an order")
+            print("3. Browse by category")
+            print("4. Quit")
+            operation = input("Please select an operation by typing 1, 2, 3, or 4: ")
 
-    # Ask if the user wants to perform another operation
-    another_operation = input("Do you want to perform another operation? (y/n): ")
-    if another_operation.lower() != 'y':
-        print(f"Thank you for your visit, {username}!")
-        print("In this session you have:")
-        for idx, action in enumerate(session_actions, start=1):
-            print(f"    {idx}. {action}")
-        break
+            if operation == "1":
+                self.list_items_by_warehouse()
+            elif operation == "2":
+                self.search_item()
+
+            elif operation == "3":
+                self.browse_by_category()
+            elif operation == "4":
+                print("Thank you for using Warehouse Management System!")
+                break
+            else:
+                print("*" * 50)
+                print(operation, "is not a valid operation.")
+                print("*" * 50)
+            another_operation = input(
+                "Do you want to perform another operation? (y/n): ")
+            if another_operation.lower() not in ["y", "yes"]:
+                self.print_session_summary()
+                break
+
+    def print_session_summary(self):
+        '''This functions prints all the operations the user did during the session'''
+        print("**************************************")
+        print(f"Thank you for your visit, {self.username}!")
+        print("**************************************")
+        print("In this session you did the following:")
+        print("**************************************")
+        for action in self.actions:
+            print("- ", action)
+
+
+# Usage
+if __name__ == "__main__":
+    system = WarehouseManagementSystem(stock, personnel)
+    system.run()
