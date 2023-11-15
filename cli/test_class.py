@@ -66,7 +66,7 @@ class TestEmployee(unittest.TestCase):
 
     def test_employee_order(self):
         # Create an Employee object with a specified user name and password
-        employee = Employee("Alice", "employee_password")
+        employee = Employee("Natalie", "employee_password")
         # Initialize an empty list to store actions performed by the employee
         actions = []
         # Define the item_name variable representing the item's name
@@ -129,18 +129,46 @@ class TestWarehouse(unittest.TestCase):
         item2 = Item(state="used", category="books")
         warehouse.add_item(item1)
         warehouse.add_item(item2)
+
         # Search for items with state "used" and category "books"
-        self.assertEqual(len(warehouse.search("used books")), 1)
-        self.assertEqual(warehouse.search("used books")[0].state, "used")
-        self.assertEqual(warehouse.search("used books")[0].category, "books")
+        search_result = warehouse.search("used books")
+        self.assertEqual(len(search_result), 1)
+        self.assertEqual(search_result[0][0].state, "used")
+        self.assertEqual(search_result[0][0].category, "books")
 
         # Search for items with state "new" and category "electronics"
-        self.assertEqual(len(warehouse.search("new electronics")), 1)
-        self.assertEqual(warehouse.search("new electronics")[0].state, "new")
-        self.assertEqual(warehouse.search("new electronics")[0].category, "electronics")
+        search_result = warehouse.search("new electronics")
+        self.assertEqual(len(search_result), 1)
+        self.assertEqual(search_result[0][0].state, "new")
+        self.assertEqual(search_result[0][0].category, "electronics")
 
         # Search for items with state "used" and category "electronics" (non-existent item)
         self.assertEqual(len(warehouse.search("used electronics")), 0)
+
+
+    class TestItem(unittest.TestCase):
+        # Test Case 1
+        item1 = Item(state="New", category="Electronics", date_of_stock=datetime(2023, 1, 15), warehouse="A1")
+        assert item1.state == "New"
+        assert item1.category == "Electronics"
+        assert item1.date_of_stock == datetime(2023, 1, 15)
+        assert str(item1) == "New Electronics"
+
+        # Test Case 2
+        item2 = Item(state="Used", category="Mouse", date_of_stock=datetime(2023, 2, 20), warehouse="B2")
+        assert item2.state == "Used"
+        assert item2.category == "Mouse"
+        assert item2.date_of_stock == datetime(2023, 2, 20)
+        assert str(item2) == "Used Mouse"
+
+        # Test Case 3 (Testing default values)
+        item3 = Item()
+        assert item3.state is None
+        assert item3.category is None
+        assert item3.date_of_stock is None
+        assert str(item3) == ""
+
+print("All tests passed!")
 
 if __name__ == '__main__':
     unittest.main()
