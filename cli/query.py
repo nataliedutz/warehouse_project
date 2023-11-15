@@ -69,39 +69,10 @@ def user_authentication(user_name):
             else:
                 print("Exiting...")
                 # Handle the case where the user decides not to change credentials
-                # For example, you might want to return a default user or raise an exception.
                 return None
         return authorized_employee
     else:
         print(f"{colors.ANSI_RED}INVALID INPUT, Please select the correct option.{colors.ANSI_RESET}")
-
-
-def placing_order(search_item, total_item_count_in_warehouses):
-    """
-    Place an order for a specific item.
-
-    Args:
-        search_item (str): The item to be ordered.
-        total_item_count_in_warehouses (int): The total count of the item in all warehouses.
-
-    Returns:
-        None
-    """
-    order_quantity = int(input(f"{colors.ANSI_WHITE}\nHow much quantity of {search_item} do you want to order? {colors.ANSI_YELLOW}"))
-    
-    if order_quantity <= total_item_count_in_warehouses:
-        print(f"{colors.ANSI_RESET}{'%' * 150}")
-        print(f"\n{' ' * 50}{colors.ANSI_GREEN}Order placed: {order_quantity} * {search_item}{colors.ANSI_RESET}\n")
-        print(f"{'%' * 150}")
-    else:
-        print(f"{colors.ANSI_RESET}{'-' * 100}")
-        print(f"{colors.ANSI_RED}There are not this many available. The maximum quantity that can be ordered is {total_item_count_in_warehouses}. {colors.ANSI_RESET}")
-        print("-" * 100)
-        ask_order_max = input(f"Do you want to order the {search_item} in maximum quantity of {total_item_count_in_warehouses}? (y/n) -  {colors.ANSI_YELLOW} ")
-        if ask_order_max.lower() == "y":
-            print(f"{colors.ANSI_RESET}{'%' * 150}")
-            print(f"\n{' ' * 50}{colors.ANSI_GREEN}Order placed: {total_item_count_in_warehouses} * {search_item}{colors.ANSI_RESET}\n")
-            print(f"{'%' * 150}")
 
 
 
@@ -207,6 +178,34 @@ def process_search_and_order(actions, authorized_employee):
         run(actions, authorized_employee)
 
 
+def placing_order(search_item, total_item_count_in_warehouses):
+    """
+    Place an order for a specific item.
+
+    Args:
+        search_item (str): The item to be ordered.
+        total_item_count_in_warehouses (int): The total count of the item in all warehouses.
+
+    Returns:
+        None
+    """
+    order_quantity = int(input(f"{colors.ANSI_WHITE}\nHow much quantity of {search_item} do you want to order? {colors.ANSI_YELLOW}"))
+    
+    if order_quantity <= total_item_count_in_warehouses:
+        print(f"{colors.ANSI_RESET}{'%' * 150}")
+        print(f"\n{' ' * 50}{colors.ANSI_GREEN}Order placed: {order_quantity} * {search_item}{colors.ANSI_RESET}\n")
+        print(f"{'%' * 150}")
+    else:
+        print(f"{colors.ANSI_RESET}{'-' * 100}")
+        print(f"{colors.ANSI_RED}There are not this many available. The maximum quantity that can be ordered is {total_item_count_in_warehouses}. {colors.ANSI_RESET}")
+        print("-" * 100)
+        ask_order_max = input(f"Do you want to order the {search_item} in maximum quantity of {total_item_count_in_warehouses}? (y/n) -  {colors.ANSI_YELLOW} ")
+        if ask_order_max.lower() == "y":
+            print(f"{colors.ANSI_RESET}{'%' * 150}")
+            print(f"\n{' ' * 50}{colors.ANSI_GREEN}Order placed: {total_item_count_in_warehouses} * {search_item}{colors.ANSI_RESET}\n")
+            print(f"{'%' * 150}")
+
+
 def category_selection(actions, authorized_employee):
     """Browse items by category."""
     category_select = Warehouse()
@@ -243,18 +242,20 @@ def category_selection(actions, authorized_employee):
         run(actions, authorized_employee)
 
 
-def select_operation():
-    """Select the operation from the menu."""
-    print(f"{colors.ANSI_RESET}\n{'-' * 150}")
-    print(f"{colors.ANSI_RESET}The following is the menu, please choose the specific numeric associated with the choice. ")
-    print(f"{' ' * 25}1. List items by warehouse")
-    print(f"{' ' * 25}2. Search an item and place an order")
-    print(f"{' ' * 25}3. Browse by category")
-    print(f"{' ' * 25}4. Quit")
-    print("-" * 150)
+def select_operation(user_input=input):
+    """
+    Display the main menu and return the user's selection.
 
-    menu_selection = input(f"\nPlease type the number associated with the operation:  {colors.ANSI_YELLOW}")
-    return menu_selection
+    :param user_input: Function to use for receiving user input (for testing purposes).
+    :return: User's menu selection.
+    """
+    print("Main Menu:")
+    print("1. List items by warehouse")
+    print("2. Search an item and place an order")
+    print("3. Browse by category")
+    print("4. Quit")
+
+    return user_input("Enter your selection (1-4): ")
 
 
 def item_list_by_warehouse():
@@ -275,16 +276,27 @@ def item_list_by_warehouse():
     return warehouses
 
 
-def run(actions, authorized_employee=None):
+def run(actions, authorized_employee=None, user_input=input):
     """Run the main program."""
+    total_items = 0  # Initialize total_items counter
+
     while True:
-        menu_selection = select_operation()
+        menu_selection = select_operation(user_input=user_input)
 
         # If the user selects operation 1
         if menu_selection == "1":
-            new_item_dict = item_list_by_warehouse()
-            total_items = sum(len(items) for items in new_item_dict.values())
-            actions.append(f"Listed {total_items} items from {len(new_item_dict.keys())} Warehouses")
+            for warehouse in item_list_by_warehouse():  # Iterate over each warehouse
+                actions.append(f"{colors.ANSI_RED}Items in Warehouse {warehouse}:{colors.ANSI_RESET}")
+
+                for item in warehouse.stock:
+                    actions.append(item)
+
+                total_items += len(warehouse.stock)  # Update total_items counter
+
+                actions.append(f"{colors.ANSI_GREEN}Total items in {warehouse}: {len(warehouse.stock)} {colors.ANSI_RESET} ")
+                actions.append(f"{'-' * 100}")
+
+            actions.append(f"Listed {total_items} items from {len(item_list_by_warehouse())} Warehouses")
 
         # Else, if they pick 2
         elif menu_selection == "2":
@@ -307,7 +319,6 @@ def run(actions, authorized_employee=None):
                         placing_order(search_item, sum(item_count_in_warehouse_dict.values()))
             else:
                 print(f"{colors.ANSI_RED}\nNot in stock")
-
             actions.append(f"Searched for {search_item}")
             continue_session = input(
                 f"\n{'*' * 20}  {colors.ANSI_PURPLE}Do you want to continue with another operation? (y/n){colors.ANSI_RESET}  "
@@ -321,7 +332,10 @@ def run(actions, authorized_employee=None):
 
         # Else, if they pick 4
         elif menu_selection == "4":
+            if authorized_employee is not None:
+                authorized_employee.bye(actions)
             break
+
 
         else:
             print("*" * 150)
