@@ -2,7 +2,6 @@ from datetime import datetime
 from collections import defaultdict
 from data import personnel, stock
 from loader import Loader
-from classes import User, Employee, Item, Warehouse
 import colors as colors
 from typing import List
 
@@ -59,6 +58,31 @@ class User:
             print(f"\n{colors.ANSI_RESET}{' ' * 20}You have not done any action in specific!")
         else:
             print(f"{colors.ANSI_RESET}\nSummary of action this session:")
+            for id, stmt in enumerate(actions):
+                print(" " * 20, id + 1, ".", stmt)
+
+
+class Employee(User):
+    def __init__(self, user_name, password, head_of=None):
+        super().__init__(user_name, password)
+        self.__password = password
+        self.head_of = []
+        if head_of:
+            self.head_of = [Employee(**employee) for employee in head_of]
+
+    def authenticate(self, password):
+        return password == self.__password
+
+    def order(self, item, amount):
+        print(f"User {self._name} ordered {amount} {item}")
+
+    def greet(self):
+        print(f"Hello, {self._name}!\nIf you experience a problem with the system, \nplease contact technical support.")
+
+    def bye(self, actions):
+        super().bye(actions)
+        if actions:
+            print("\nSummary of actions this session:")
             for id, stmt in enumerate(actions):
                 print(" " * 20, id + 1, ".", stmt)
 
@@ -135,7 +159,7 @@ class Warehouse:
         """
         return f"Warehouse {self.warehouse_id}"
 
-    def browse_by_category(self)
+    def browse_by_category(self):
         """
         Browse items in the warehouse by category.
 
@@ -155,5 +179,6 @@ class Warehouse:
             print(f"{' ' * 20}{colors.ANSI_PURPLE}{id + 1} {key} ({value}){colors.ANSI_RESET}")
         print()
         return dict_id_category
+
 
 
