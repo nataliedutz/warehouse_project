@@ -101,9 +101,9 @@ class Item:
         Returns:
             str: The string representation of the item.
         """
-        if not self.state:
-            return self.category
-        return f"{self.state} {self.category}"
+        if self.state is not None and self.category is not None:
+            return f"{self.state} {self.category}"
+        return ""
 
 
 class Warehouse:
@@ -143,12 +143,14 @@ class Warehouse:
 
         for item in self.stock:
             if str(item).lower() == search_item.lower():
-                if isinstance(item, str):
-                    search_item_list.append((str(item)))
+                if isinstance(item, Item):  # Check if item is an instance of the Item class
+                    search_item_list.append((item, item.date_of_stock))
                 else:
-                    search_item_list.append((str(item), item.date_of_stock))
+                    # If item is a string representation, create a dummy Item without date
+                    search_item_list.append((Item(), None))
 
         return search_item_list
+
 
     def __str__(self):
         """
