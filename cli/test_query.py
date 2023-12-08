@@ -5,12 +5,7 @@ from data import personnel, stock
 from loader import Loader
 import query
 from classes import User,Employee, Warehouse , Item
-import classes
-import colors
 from contextlib import contextmanager
-from my_utils import strip_ansi
-
-
 
 
 @contextmanager
