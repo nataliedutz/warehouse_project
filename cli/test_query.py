@@ -1,114 +1,123 @@
-import io
-import unittest.mock
-import builtins
+from unittest.mock import Mock, MagicMock, patch
+import unittest
+from io import StringIO
+from data import personnel, stock
+from loader import Loader
+import query
+from classes import User,Employee, Warehouse , Item
+import classes
+import colors
 from contextlib import contextmanager
-from query import get_user_name, validate_user, select_operation, item_list_by_warehouse, run, AuthenticationError
-from classes import Employee
+from my_utils import strip_ansi
+
+
+
 
 @contextmanager
 def mock_input(mock):
-    original_input = builtins.input
+    original_input = __builtins__.input
     __builtins__.input = lambda _: mock
     yield
     __builtins__.input = original_input
 
+
 @contextmanager
 def mock_output(mock):
-    original_print = builtins.print
+    original_print = __builtins__.print
     __builtins__.print = lambda *value: [mock.append(val) for val in value]
     yield
     __builtins__.print = original_print
 
-class TestGetUserName(unittest.TestCase):
 
-    def test_get_user_name(self):
-        mock_inputs = 'jennifer'
-        with mock_input(mock_inputs):
-            result = get_user_name()
-        self.assertEqual(result, 'Jennifer')
+class TestQueryFunctions(unittest.TestCase):
 
+    def test_user_authentication(self):
+        # Test GUEST mode
+        with mock_input("Natalie"):
+            with mock_input("1"):
+                prints = []
+                with mock_output(prints):
+                    user_obj = query.user_authentication("Natalie")
 
-class TestValidateUser(unittest.TestCase):
+        # Check if the user is an instance of the User class
+        self.assertIsInstance(user_obj, query.User)
+        self.assertEqual(user_obj._name, "Natalie", "Guest user should have the correct name")
+        self.assertFalse(user_obj.is_authenticated, "Guest user should not be authenticated")
 
-    def setUp(self):
-        self.personnel = [
-            Employee("Barbara", "password2"),
-            Employee("Nicole", "password1"),
+                    
+
+        # Test when the user answers with a name that is in the employees list
+        with mock_input("Jeremy"):
+            user_name = query.get_user_name()
+            with patch("builtins.input",side_effect=["2", "coppers"]):
+                prints_employee=[]
+                with mock_output(prints_employee):
+                    user_obj=query.user_authentication(user_name)
+                self.assertTrue(isinstance(user_obj,Employee))
+
+    def test_select_operation(self):
+        # Test the output printed contains all the options available
+        with mock_input("1"):
+            prints = []
+            with mock_output(prints):
+                operation = query.select_operation()
+
+            # Check if key phrases are present in the output
+            self.assertIn("Main Menu:", prints)
+            self.assertIn("1. List items by warehouse", prints)
+            self.assertIn("2. Search an item and place an order", prints)
+            self.assertIn("3. Browse by category", prints)
+            self.assertIn("4. Quit", prints)
+
+        
+    def test_search_and_order_item(self):
+        """Test the search_and_order_item function."""
+
+        # Set up input for the search item
+        with mock_input("second hand printer"):
+            prints = []
+            with mock_output(prints):
+                location, item_count_in_warehouse_dict, search_item = query.search_and_order_item(stock)
+
+        # Define the expected result based on your input data
+        expected_location = [
+            "Second hand - Warehouse 1",
+            "Second hand - Warehouse 3",
+            "Second hand - Warehouse 4",
+            "Second hand - Warehouse 4",
+            "Second hand - Warehouse 1",
+            "Second hand - Warehouse 4",
+            "Second hand - Warehouse 2",
+            "Second hand - Warehouse 1",
+            "Second hand - Warehouse 3",
+            "Second hand - Warehouse 3",
+            "Second hand - Warehouse 3",
+            "Second hand - Warehouse 1",
         ]
+        expected_item_count = {1: 4, 2: 1, 3: 4, 4: 3}
+        expected_search_item = "second hand printer"
 
+        # Compare the actual output with the expected output
+        self.assertEqual(location, expected_location, "The locations list is not matching")
+        self.assertEqual(item_count_in_warehouse_dict, expected_item_count, "The item count in the warehouse dict is not matching")
+        self.assertEqual(search_item, expected_search_item, "The searched item is not matching")
 
-    def test_valid_user(self):
-        mock_inputs = ['Nicole', 'password1']  
-        with mock_input(mock_inputs):
-            result = validate_user(self.personnel, "password1", "Nicole")
-            self.assertIsNotNone(result)
-            self.assertTrue(result.is_authenticated)
-
-
-    def test_invalid_user(self):
-        mock_inputs = ['Nadine', 'wrongpassword']
-        with mock_input(mock_inputs), self.assertRaises(AuthenticationError):
-            result = validate_user(self.personnel, "password1", "Nadine")
-            self.assertIsNone(result)
-            if result is not None:
-                self.assertFalse(result.is_authenticated)
-'''
-class TestSelectOperation(unittest.TestCase):
-
-    @unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
-    def test_select_operation_menu_display(self, mock_stdout):
-        mock_inputs = ['1']
-        with mock_input(mock_inputs):
-            select_operation()
-
-        printed_content = mock_stdout.getvalue()
-        self.assertIn("1. List items by warehouse", printed_content)
-        self.assertIn("2. Search an item and place an order", printed_content)
-        self.assertIn("3. Browse by category", printed_content)
-        self.assertIn("4. Quit", printed_content)
-
-
-    def test_select_operation_and_run(self):
-    mock_inputs = ['2', 'second hand printer', 'n']
-    with mock_input(mock_inputs), mock_output([]) as mock_print:
-        actions = []  # List to capture actions performed during the run
-        select_operation_user_input = lambda _: '2'  # This will simulate selecting option 2
-
-        menu_selection = select_operation(user_input=select_operation_user_input)
-        self.assertEqual(menu_selection, '2')
-
-        if menu_selection == '2':
-            authorized_employee = None
-
-            run(actions, authorized_employee, user_input=select_operation_user_input)
-
-            printed_content = ''.join(call[0][0] for call in mock_print.call_args_list)
-
-            self.assertIn("Enter the item that you are searching:", printed_content)
-            self.assertIn("Not in stock", printed_content)
-            self.assertIn("Do you want to continue with another operation? (y/n)", printed_content)
-            self.assertIn("Searched for second hand printer", actions)
-
-
-class TestItemListByWarehouse(unittest.TestCase):
 
  
+    def test_item_list_by_warehouse(self):
+        # Test the function returns a string saying "Listed 5000 items"
+        prints = []
+        with mock_output(prints):
+            warehouses = query.item_list_by_warehouse()
+        
+        total_items = 0
+        for warehouse in warehouses:
+            for i in warehouse.stock:
+                if isinstance(i, Item):
+                    total_items += 1
+        self.assertEqual(total_items, 5000, "Incorrect total items from all warehouses are 5000")
 
-    @unittest.mock.patch('query.get_user_name', return_value="SomeUsername")
-    @unittest.mock.patch('classes.Warehouse', autospec=True)
-    @unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
-    def test_item_list_by_warehouse(self, mock_stdout, mock_warehouse):
-        # Mock the return value of the stock attribute
-        mock_warehouse.return_value.stock = ["item1", "item2", "item3"]
 
-        result = item_list_by_warehouse()
 
-        # Check if the function returns the expected string
-        self.assertEqual(result, "Listed 3 items")
-
-        # Check if the last lines of the printed output match the expected pattern
-        expected_output = "Total items in Warehouse: 3\n"
-        self.assertIn(expected_output, mock_stdout.getvalue())'''
-
-if __name__ == '__main__':
+if __name__=="__main__":
     unittest.main()
