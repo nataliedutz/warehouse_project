@@ -34,30 +34,23 @@ class TestClasses(unittest.TestCase):
         """Test if essential classes exist."""
         # Check if Warehouse class exists
         self.assertTrue(
-            hasattr(Warehouse, '__name__'), "Warehouse class does not exist."
-            )
+            hasattr(Warehouse, "__name__"), "Warehouse class does not exist."
+        )
 
         # Check if Item class exists
-        self.assertTrue(
-            hasattr(Item, '__name__'), "Item class does not exist."
-            )
+        self.assertTrue(hasattr(Item, "__name__"), "Item class does not exist.")
 
         # Check if User class exists
-        self.assertTrue(
-            hasattr(User, '__name__'), "User class does not exist."
-            )
+        self.assertTrue(hasattr(User, "__name__"), "User class does not exist.")
 
         # Check if Employee class exists
-        self.assertTrue(hasattr(
-            Employee, '__name__'), "Employee class does not exist."
-            )
+        self.assertTrue(hasattr(Employee, "__name__"), "Employee class does not exist.")
 
     def test_for_inheritance(self):
         """Test if Employee class inherits from User class."""
         self.assertTrue(
-            issubclass(Employee, User),
-            "Employee class does not inherit from User."
-            )
+            issubclass(Employee, User), "Employee class does not inherit from User."
+        )
 
 
 class TestUser(unittest.TestCase):
@@ -207,9 +200,11 @@ class TestWarehouse(unittest.TestCase):
         """Test different cases of Item creation."""
         # Test Case 1
         item1 = Item(
-            state="New", category="Electronics",
-            date_of_stock=datetime(2023, 1, 15), warehouse="A1"
-            )
+            state="New",
+            category="Electronics",
+            date_of_stock=datetime(2023, 1, 15),
+            warehouse="A1",
+        )
         assert item1.state == "New"
         assert item1.category == "Electronics"
         assert item1.date_of_stock == datetime(2023, 1, 15)
@@ -217,9 +212,11 @@ class TestWarehouse(unittest.TestCase):
 
         # Test Case 2
         item2 = Item(
-            state="Used", category="Mouse",
-            date_of_stock=datetime(2023, 2, 20), warehouse="B2"
-            )
+            state="Used",
+            category="Mouse",
+            date_of_stock=datetime(2023, 2, 20),
+            warehouse="B2",
+        )
         assert item2.state == "Used"
         assert item2.category == "Mouse"
         assert item2.date_of_stock == datetime(2023, 2, 20)
@@ -235,5 +232,5 @@ class TestWarehouse(unittest.TestCase):
 
 print("All tests passed!")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

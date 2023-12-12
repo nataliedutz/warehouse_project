@@ -50,7 +50,8 @@ class User:
             f"{colors.ANSI_PURPLE}{' ' * 30}Hello, {self._name}!\n{' ' * 20}"
             f"Welcome to our Warehouse Database.\n{' ' * 16}If you don't find "
             f"what you are looking for,\n{' ' * 14}Please ask one of our "
-            f"staff members to assist you.{colors.ANSI_RESET}")
+            f"staff members to assist you.{colors.ANSI_RESET}"
+        )
 
     def bye(self, actions):
         """
@@ -62,13 +63,13 @@ class User:
         print(
             f"{colors.ANSI_BLUE}\n{'-' * 75}  Thank you for "
             f"your visit, {self._name}.  {'-' * 75}{colors.ANSI_RESET}\n"
-            )
+        )
 
         if len(actions) == 0:
             print(
                 f"\n{colors.ANSI_RESET}{' ' * 20}"
                 f"You have not done any action in specific."
-                )
+            )
         else:
             print(f"{colors.ANSI_RESET}\nSummary of action this session:")
             for id, stmt in enumerate(actions):
@@ -107,7 +108,7 @@ class Employee(User):
         print(
             f"Hello, {self._name}!\nIf you experience a problem "
             f"with the system, \nplease contact technical support."
-            )
+        )
 
     def bye(self, actions):
         """Display a farewell message for the employee."""
@@ -117,9 +118,7 @@ class Employee(User):
 class Item:
     """Class representing an item in the warehouse."""
 
-    def __init__(
-            self, state=None, category=None, date_of_stock=None, warehouse=None
-            ):
+    def __init__(self, state=None, category=None, date_of_stock=None, warehouse=None):
         """Initialize an Item instance."""
         self.state = state
         self.category = category
@@ -210,7 +209,7 @@ class Warehouse:
                 list_item_category.append(item.category)
         dict_item_category_count = {
             i: list_item_category.count(i) for i in list_item_category
-            }
+        }
         dict_id_category = {}
         print()
         for id, (key, value) in enumerate(dict_item_category_count.items()):
@@ -218,6 +217,6 @@ class Warehouse:
             print(
                 f"{' ' * 20}{colors.ANSI_PURPLE}{id + 1} "
                 f"{key} ({value}){colors.ANSI_RESET}"
-                )
+            )
         print()
         return dict_id_category

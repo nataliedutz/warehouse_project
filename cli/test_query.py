@@ -46,12 +46,11 @@ class TestQueryFunctions(unittest.TestCase):
         # Check if the user is an instance of the User class
         self.assertIsInstance(user_obj, query.User)
         self.assertEqual(
-            user_obj._name,
-            "Natalie", "Guest user should have the correct name"
-            )
+            user_obj._name, "Natalie", "Guest user should have the correct name"
+        )
         self.assertFalse(
             user_obj.is_authenticated, "Guest user should not be authenticated"
-            )
+        )
 
         # Test EMPLOYEE mode
         with mock_input("Jeremy"):
@@ -83,7 +82,9 @@ class TestQueryFunctions(unittest.TestCase):
             prints = []
             with mock_output(prints):
                 (
-                    location, item_count_in_warehouse_dict, search_item
+                    location,
+                    item_count_in_warehouse_dict,
+                    search_item,
                 ) = query.search_and_order_item(stock)
 
         # Define the expected result based on your input data
@@ -107,15 +108,15 @@ class TestQueryFunctions(unittest.TestCase):
         # Compare the actual output with the expected output
         self.assertEqual(
             location, expected_location, "The locations list is not matching"
-            )
+        )
         self.assertEqual(
-            item_count_in_warehouse_dict, expected_item_count,
-            "The item count in the warehouse dict is not matching"
-            )
+            item_count_in_warehouse_dict,
+            expected_item_count,
+            "The item count in the warehouse dict is not matching",
+        )
         self.assertEqual(
-            search_item, expected_search_item,
-            "The searched item is not matching"
-            )
+            search_item, expected_search_item, "The searched item is not matching"
+        )
 
     def test_item_list_by_warehouse(self):
         """Test the item_list_by_warehouse function."""
@@ -124,9 +125,10 @@ class TestQueryFunctions(unittest.TestCase):
             total_items, warehouses = query.item_list_by_warehouse()
             expected_total_items = 5000
         self.assertEqual(
-            total_items, expected_total_items,
-            "Incorrect total items from all warehouses are 5000"
-            )
+            total_items,
+            expected_total_items,
+            "Incorrect total items from all warehouses are 5000",
+        )
 
 
 if __name__ == "__main__":
