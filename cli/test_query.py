@@ -1,13 +1,21 @@
-from unittest.mock import patch
+"""
+This module tests functions of the query module.
+
+The module uses mocked input and output using mainly context manager.
+"""
+
 import unittest
-from data import stock
+from contextlib import contextmanager
+from unittest.mock import patch
+
 import query
 from classes import Employee
-from contextlib import contextmanager
+from data import stock
 
 
 @contextmanager
 def mock_input(mock):
+    """Context manager for mocking the input function."""
     original_input = __builtins__.input
     __builtins__.input = lambda _: mock
     yield
@@ -16,6 +24,7 @@ def mock_input(mock):
 
 @contextmanager
 def mock_output(mock):
+    """Context manager for mocking the print function."""
     original_print = __builtins__.print
     __builtins__.print = lambda *value: [mock.append(val) for val in value]
     yield
@@ -23,8 +32,10 @@ def mock_output(mock):
 
 
 class TestQueryFunctions(unittest.TestCase):
+    """Test case for the query functions."""
 
     def test_user_authentication(self):
+        """This function tests the user authentication."""
         # Test GUEST mode
         with mock_input("Natalie"):
             with mock_input("1"):
@@ -42,7 +53,7 @@ class TestQueryFunctions(unittest.TestCase):
             user_obj.is_authenticated, "Guest user should not be authenticated"
             )
 
-        # Test when the user answers with a name that is in the employees list
+        # Test EMPLOYEE mode
         with mock_input("Jeremy"):
             user_name = query.get_user_name()
             with patch("builtins.input", side_effect=["2", "coppers"]):
@@ -52,7 +63,7 @@ class TestQueryFunctions(unittest.TestCase):
                 self.assertTrue(isinstance(user_obj, Employee))
 
     def test_select_operation(self):
-        # Test the output printed contains all the options available
+        """Test the select_operation function."""
         with mock_input("1"):
             prints = []
             with mock_output(prints):
@@ -67,7 +78,6 @@ class TestQueryFunctions(unittest.TestCase):
 
     def test_search_and_order_item(self):
         """Test the search_and_order_item function."""
-
         # Set up input for the search item
         with mock_input("second hand printer"):
             prints = []
@@ -108,7 +118,7 @@ class TestQueryFunctions(unittest.TestCase):
             )
 
     def test_item_list_by_warehouse(self):
-        # Test the function returns a string saying "Listed 5000 items"
+        """Test the item_list_by_warehouse function."""
         prints = []
         with mock_output(prints):
             total_items, warehouses = query.item_list_by_warehouse()

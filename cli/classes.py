@@ -1,9 +1,20 @@
-from loader import Loader
+"""
+Classes module for user, employee, item, and warehouse representations.
+
+This module defines the User, Employee, Item, and Warehouse classes,
+which represent entities in a warehouse management system.
+The classes encapsulate functionality related to user authentication,
+item management, and warehouse operations.
+"""
 import colors
+from loader import Loader
 
 
 class User:
+    """Class representing a user in the system."""
+
     def __init__(self, user_name="Anonymous", password=None):
+        """Initialize a User instance."""
         self._name = user_name
         self.is_authenticated = False
 
@@ -34,9 +45,7 @@ class User:
         return name == self._name
 
     def greet(self):
-        """
-        Display a greeting message for the user.
-        """
+        """Display a greeting message for the user."""
         print(
             f"{colors.ANSI_PURPLE}{' ' * 30}Hello, {self._name}!\n{' ' * 20}"
             f"Welcome to our Warehouse Database.\n{' ' * 16}If you don't find "
@@ -67,7 +76,10 @@ class User:
 
 
 class Employee(User):
+    """Class representing an employee in the system."""
+
     def __init__(self, user_name, password, head_of=None):
+        """Initialize an Employee instance."""
         super().__init__(user_name, password)
         self.__password = password
         self.head_of = []
@@ -75,25 +87,40 @@ class Employee(User):
             self.head_of = [Employee(**employee) for employee in head_of]
 
     def authenticate(self, password):
+        """
+        Authenticate the employee.
+
+        Args:
+            password (str): The entered password.
+
+        Returns:
+            bool: True if authentication is successful, False otherwise.
+        """
         return password == self.__password
 
     def order(self, item, amount):
+        """Place an order for an item."""
         print(f"User {self._name} ordered {amount} {item}")
 
     def greet(self):
+        """Display a greeting message for the employee."""
         print(
             f"Hello, {self._name}!\nIf you experience a problem "
             f"with the system, \nplease contact technical support."
             )
 
     def bye(self, actions):
+        """Display a farewell message for the employee."""
         super().bye(actions)
 
 
 class Item:
+    """Class representing an item in the warehouse."""
+
     def __init__(
             self, state=None, category=None, date_of_stock=None, warehouse=None
             ):
+        """Initialize an Item instance."""
         self.state = state
         self.category = category
         self.date_of_stock = date_of_stock
@@ -112,7 +139,10 @@ class Item:
 
 
 class Warehouse:
+    """Class representing a warehouse in the system."""
+
     def __init__(self, warehouse_id=None):
+        """Initialize a Warehouse instance."""
         self.warehouse_id = warehouse_id
         self.stock = []
 
@@ -160,6 +190,7 @@ class Warehouse:
     def __str__(self):
         """
         Return a string representing the warehouse.
+
         Returns:
             str: The string representation of the warehouse.
         """

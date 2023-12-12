@@ -1,15 +1,31 @@
-from data import stock
-from classes import User, Employee, Warehouse, Item
-import colors
-from typing import List, Tuple
-from loader import Loader
+"""
+CLI for Warehouse Management System.
 
+This module provides a Command Line Interface (CLI) for interacting
+with a Warehouse Management System. It includes commands for user
+authentication, checking stock levels,
+and performing various warehouse operations.
+"""
+
+from typing import List, Tuple
+
+import colors
+from classes import Employee, Item, User, Warehouse
+from data import stock
+from loader import Loader
 
 personnel_loader = Loader(model="personnel")  # List of Employee objects
 stock_loader = Loader(model="stock")  # List of Warehouse objects
 
 
 class AuthenticationError(Exception):
+    """
+    Exception raised for authentication errors during user login.
+
+    This exception can be raised when there is
+    an issue with user authentication.
+    """
+
     pass
 
 

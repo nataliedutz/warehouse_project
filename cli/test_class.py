@@ -1,14 +1,37 @@
+"""
+This module contains unit tests for the classes in the 'classes' module.
+
+The tests cover the functionality and behavior of the
+User, Employee, Item, and Warehouse classes.
+Additionally, it checks for the existence and inheritance of these classes.
+
+Each test case focuses on specific aspects of the classes,
+including creation, authentication,
+ordering, warehouse operations, and item properties.
+
+"""
+
 import unittest
 from datetime import datetime
-from classes import Warehouse, Item, User, Employee
+
+from classes import Employee, Item, User, Warehouse
 
 
 class TestClasses(unittest.TestCase):
+    """Test case for checking class existence and inheritance."""
 
     def setUp(self):
+        """
+        Set up any necessary preconditions for the test cases.
+
+        This method is called before each individual test method is run.
+        If there are no specific preconditions to set up,
+        this method can remain empty.
+        """
         pass
 
     def test_classes_exist(self):
+        """Test if essential classes exist."""
         # Check if Warehouse class exists
         self.assertTrue(
             hasattr(Warehouse, '__name__'), "Warehouse class does not exist."
@@ -30,7 +53,7 @@ class TestClasses(unittest.TestCase):
             )
 
     def test_for_inheritance(self):
-        # Check if employee class inherits from User class
+        """Test if Employee class inherits from User class."""
         self.assertTrue(
             issubclass(Employee, User),
             "Employee class does not inherit from User."
@@ -38,33 +61,40 @@ class TestClasses(unittest.TestCase):
 
 
 class TestUser(unittest.TestCase):
+    """Test case for the User class."""
 
     def test_user_creation_without_arguments(self):
+        """Test user creation without arguments."""
         user = User()
         self.assertEqual(user._name, "Anonymous")
         self.assertFalse(user.is_authenticated)
 
     def test_user_creation_with_user_name(self):
-        user_name = "JohnDoe"
+        """Test user creation with a provided user name."""
+        user_name = "Thomas"
         user = User(user_name)
         self.assertEqual(user._name, user_name)
         self.assertFalse(user.is_authenticated)
 
     def test_user_authentication(self):
+        """Test user authentication."""
         user = User("Alice")
         self.assertFalse(user.authenticate("some_password"))
         self.assertFalse(user.is_authenticated)
 
     def test_user_name_matching(self):
+        """Test user name matching."""
         user = User("Alice")
         self.assertTrue(user.is_named("Alice"))
         self.assertFalse(user.is_named("Bob"))
 
 
 class TestEmployee(unittest.TestCase):
+    """Test case for the Employee class."""
 
     def test_employee_creation(self):
-        user_name = "JohnDoe"
+        """Test employee creation."""
+        user_name = "Fritz"
         password = "secretpassword"
         employee = Employee(user_name, password)
         # Check if _name attribute is equal to the provided user_name
@@ -77,6 +107,7 @@ class TestEmployee(unittest.TestCase):
         self.assertFalse(employee.is_authenticated)
 
     def test_employee_order(self):
+        """Test employee order."""
         # Create an Employee object with a specified user name and password
         employee = Employee("Natalie", "employee_password")
         # Initialize an empty list to store actions performed by the employee
@@ -93,14 +124,17 @@ class TestEmployee(unittest.TestCase):
 
 
 class TestWarehouse(unittest.TestCase):
+    """Test case for the Warehouse class."""
 
     def test_warehouse_creation_with_no_argument(self):
+        """Test warehouse creation with no argument."""
         # Create a warehouse without passing a warehouse_id argument
         warehouse = Warehouse()
         # Check if warehouse_id property is None when no argument is passed
         self.assertIsNone(warehouse.warehouse_id)
 
     def test_warehouse_creation_with_warehouse_id_argument(self):
+        """Test warehouse creation with a warehouse_id argument."""
         # Define a specific warehouse ID
         warehouse_id = 1
         # Create a warehouse with the specified warehouse_id
@@ -110,12 +144,14 @@ class TestWarehouse(unittest.TestCase):
         self.assertEqual(warehouse.warehouse_id, warehouse_id)
 
     def test_warehouse_creation_stock_is_empty_list(self):
+        """Test if warehouse creation results in an empty stock."""
         # Create a warehouse
         warehouse = Warehouse()
         # Check if the stock property is an empty list after warehouse creation
         self.assertEqual(len(warehouse.stock), 0)
 
     def test_occupancy_method_returns_length_of_stock(self):
+        """Test if the occupancy method returns the length of the stock."""
         # Create a warehouse
         warehouse = Warehouse()
         # Add items to the warehouse's stock
@@ -128,6 +164,7 @@ class TestWarehouse(unittest.TestCase):
         self.assertEqual(warehouse.occupancy(), len(warehouse.stock))
 
     def test_add_item_increases_total_items_in_stock(self):
+        """Test if adding an item increases the total items in stock."""
         # Create a warehouse
         warehouse = Warehouse()
         # Add an item to the warehouse's stock
@@ -138,6 +175,7 @@ class TestWarehouse(unittest.TestCase):
         self.assertEqual(len(warehouse.stock), 1)
 
     def test_search_method_returns_correct_items(self):
+        """Test if the search method returns correct items."""
         # Create a warehouse
         warehouse = Warehouse()
         # Add items to the warehouse's stock
@@ -163,6 +201,10 @@ class TestWarehouse(unittest.TestCase):
         self.assertEqual(len(warehouse.search("used electronics")), 0)
 
     class TestItem(unittest.TestCase):
+        """Test case for the Item class."""
+
+    def test_item_properties(self):
+        """Test different cases of Item creation."""
         # Test Case 1
         item1 = Item(
             state="New", category="Electronics",
