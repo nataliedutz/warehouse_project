@@ -474,4 +474,4 @@ def start_shopping():
         authorized_employee.bye(actions)
 
 
-# start_shopping()
+start_shopping()
