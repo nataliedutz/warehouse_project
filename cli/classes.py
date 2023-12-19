@@ -10,6 +10,13 @@ import colors
 from loader import Loader
 
 
+class MissingArgument(Exception):
+    """Custom exception for missing arguments in the classes."""
+    def __init__(self, argument, message):
+        self.argument = argument
+        self.message = message
+        super().__init__(f"MissingArgument: {argument} is missing. {message}.")
+
 class User:
     """Class representing a user in the system."""
 
@@ -82,10 +89,17 @@ class Employee(User):
     def __init__(self, user_name, password, head_of=None):
         """Initialize an Employee instance."""
         super().__init__(user_name, password)
+        self._name = user_name
         self.__password = password
         self.head_of = []
         if head_of:
             self.head_of = [Employee(**employee) for employee in head_of]
+
+         # Check for missing arguments and raise exception
+        if not user_name:
+            raise MissingArgument("user_name", "An employee cannot be anonymous.")
+        if not password:
+            raise MissingArgument("password", "An employee requires authentication.")
 
     def authenticate(self, password):
         """
