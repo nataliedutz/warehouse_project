@@ -14,7 +14,7 @@ ordering, warehouse operations, and item properties.
 import unittest
 from datetime import datetime
 
-from classes import Employee, Item, User, Warehouse
+from classes import Employee, Item, User, Warehouse, MissingArgument
 
 
 class TestClasses(unittest.TestCase):
@@ -193,8 +193,8 @@ class TestWarehouse(unittest.TestCase):
         # "electronics" (non-existent item)
         self.assertEqual(len(warehouse.search("used electronics")), 0)
 
-    class TestItem(unittest.TestCase):
-        """Test case for the Item class."""
+class TestItem(unittest.TestCase):
+    """Test case for the Item class."""
 
     def test_item_properties(self):
         """Test different cases of Item creation."""
@@ -229,6 +229,24 @@ class TestWarehouse(unittest.TestCase):
         assert item3.date_of_stock is None
         assert str(item3) == ""
 
+class TestClassExceptions(unittest.TestCase):
+    def test_class_exceptions(self):
+        """Test classes exceptions."""
+        # An Employee without a user_name raises a MissingArgument exception
+        with self.assertRaises(MissingArgument) as context:
+            Employee(user_name=None, password="password")
+        self.assertTrue(
+            str(context.exception).startswith("MissingArgument: user_name is missing."),
+            f"Expected: 'MissingArgument: user_name is missing. An employee cannot be anonymous'\nActual: '{str(context.exception)}'"
+        )
+
+        # An Employee without a password raises a MissingArgument exception
+        with self.assertRaises(MissingArgument) as context:
+            Employee(user_name="Username", password=None)
+        self.assertTrue(
+            str(context.exception).startswith("MissingArgument: password is missing."),
+            f"Expected: 'MissingArgument: password is missing. An employee requires authentication.'\nActual: '{str(context.exception)}'"
+        )
 
 print("All tests passed!")
 
