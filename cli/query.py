@@ -6,7 +6,9 @@ with a Warehouse Management System. It includes commands for user
 authentication, checking stock levels,
 and performing various warehouse operations.
 """
-
+import os
+import json
+from datetime import datetime
 from typing import List, Tuple
 
 import colors
@@ -16,7 +18,7 @@ from loader import Loader
 
 personnel_loader = Loader(model="personnel")  # List of Employee objects
 stock_loader = Loader(model="stock")  # List of Warehouse objects
-
+stock = stock_loader.objects
 
 class AuthenticationError(Exception):
     """
@@ -157,25 +159,25 @@ def search_and_order_item(stock) -> Tuple[List[str], dict, str]:
     location = []
     item_count_in_warehouse_dict = {}
 
-    for item in stock:
-        item_name = (
-            f"{item.get('state', '').lower()} " f"{item.get('category', '').lower()}"
-        )
-        if search_item in item_name:
-            warehouse_id = item.get("warehouse", "")
-            location.append(
-                f"{item.get('state', '')} {item.get('category', '').lower()}"
-                f" - Warehouse {warehouse_id}"
-            )
-            if warehouse_id in item_count_in_warehouse_dict:
-                item_count_in_warehouse_dict[warehouse_id] += 1
-            else:
-                item_count_in_warehouse_dict[warehouse_id] = 1
-    # print(f"Location: {location}")
-    # print(f"Item count in warehouse dict: {item_count_in_warehouse_dict}")
+    for warehouse in stock:
+        for item in warehouse.stock:
+            if isinstance(item, Item):
+                item_name = (
+                    f"{item.state.lower()} " f"{item.category.lower()}"
+                )
+                if search_item in item_name:
+                    
+                    warehouse_id = warehouse.warehouse_id
+                    location.append(
+                        f"{item.state} {item.category.lower()}"
+                        f" - Warehouse {warehouse_id}"
+                    )
+                    if warehouse_id in item_count_in_warehouse_dict:
+                        item_count_in_warehouse_dict[warehouse_id] += 1
+                    else:
+                        item_count_in_warehouse_dict[warehouse_id] = 1
 
     return location, item_count_in_warehouse_dict, search_item
-
 
 def process_search_and_order(actions, authorized_employee):
     """
@@ -207,7 +209,7 @@ def process_search_and_order(actions, authorized_employee):
                 f"Do you want to place an order for the item {search_item}?"
                 f" (y/n) - {colors.ANSI_YELLOW}"
             )
-            if place_order.lower() in ("y", "Y"):
+            if place_order.lower() == "y":
                 placing_order(
                     search_item, sum(item_count_in_warehouse_dict.values()), actions
                 )
@@ -225,65 +227,119 @@ def process_search_and_order(actions, authorized_employee):
         run(actions, authorized_employee)
 
 
-def placing_order(search_item, total_item_count_in_warehouses, actions):
-    """
-    Place an order for a specific item.
-
-    Args:
-        search_item (str): The item to be ordered.
-        total_item_count_in_warehouses (int):
-            The total count of the item in all warehouses.
-
-    Returns:
-        None
-    """
+def validate_order_quantity(search_item):
+    """Validate and return the order quantity entered by the user."""
     try:
-        order_quantity = int(
-            input(
-                f"{colors.ANSI_BLUE}\nHow much quantity of "
-                f"{search_item} do you want to order? {colors.ANSI_YELLOW}"
-            )
-        )
+        return int(input(f"{colors.ANSI_BLUE}\nHow much quantity of "
+                         f"{search_item} do you want to order? "
+                         f"{colors.ANSI_YELLOW}"))
     except ValueError:
-        print(
-            f"{colors.ANSI_RED}Invalid input! "
-            f"Please enter a valid integer.{colors.ANSI_RESET}"
-        )
-        return
-    # If the order quantity is valid, proceed with the order
-    if order_quantity <= total_item_count_in_warehouses:
-        print(f"{colors.ANSI_RESET}{'%' * 150}")
-        print(
-            f"\n{' ' * 50}{colors.ANSI_GREEN}Order placed: "
-            f"{order_quantity} * {search_item}{colors.ANSI_RESET}\n"
-        )
-        print(f"{'%' * 150}")
-        actions.append(f"Ordered {order_quantity} of {search_item}")
+        print(f"{colors.ANSI_RED}Invalid input! Please enter a valid integer.{colors.ANSI_RESET}")
+        return None
 
-    # If the order quantity exceeds the available quantity
-    else:
-        print(f"{colors.ANSI_RESET}{'-' * 100}")
-        print(
-            f"{colors.ANSI_RED}There are not this many available. "
-            f"The maximum quantity that can be ordered is "
-            f"{colors.ANSI_RESET} {total_item_count_in_warehouses}."
-        )
-        print("-" * 100)
-        ask_order_max = input(
-            f"{colors.ANSI_BLUE}Do you want to order the {search_item} "
-            f"in maximum quantity of {total_item_count_in_warehouses}? "
-            f"(y/n) -  {colors.ANSI_YELLOW}"
-        )
-        # If user chooses to order MAX quantity, proceed with order
-        if ask_order_max.lower() == "y":
+def placing_order(search_item, total_item_count_in_warehouses, actions):
+    order_quantity = validate_order_quantity(search_item)
+
+    if order_quantity is not None:
+        if order_quantity <= total_item_count_in_warehouses:
+            for warehouse in stock_loader:
+                for item in warehouse.stock:
+                    if isinstance(item, Item) and item.category.lower() == search_item.lower():
+                        warehouse.stock.remove(item)
+                        # Update the order quantity
+                        order_quantity -= 1  
+
+                        if order_quantity == 0:
+                            break
+
+            # save_stock_data_to_json(stock_loader.objects)
             print(f"{colors.ANSI_RESET}{'%' * 150}")
-            print(
-                f"\n{' ' * 50}{colors.ANSI_GREEN}Order placed: "
-                f"{total_item_count_in_warehouses} * "
-                f"{search_item}{colors.ANSI_RESET}\n"
-            )
+            print(f"\n{' ' * 50}{colors.ANSI_GREEN}Order placed: "
+                  f"{order_quantity} * {search_item}{colors.ANSI_RESET}\n")
             print(f"{'%' * 150}")
-            actions.append(f"Ordered {total_item_count_in_warehouses} of {search_item}")
+            actions.append(f"Ordered {order_quantity} of {search_item}")
+
+        else:
+            print(f"{colors.ANSI_RESET}{'-' * 100}")
+            print(f"{colors.ANSI_RED}There are not this many available. "
+                  f"The maximum quantity that can be ordered is "
+                  f"{colors.ANSI_RESET} {total_item_count_in_warehouses}.")
+            print("-" * 100)
+            ask_order_max = input(
+                f"{colors.ANSI_BLUE}Do you want to order the {search_item} "
+                f"in maximum quantity of {total_item_count_in_warehouses}? "
+                f"(y/n) -  {colors.ANSI_YELLOW}")
+
+            if ask_order_max.lower() == "y":
+                for warehouse in stock_loader:
+                    for item in warehouse.stock:
+                        if isinstance(item, Item) and item.category.lower() == search_item.lower():
+                            warehouse.stock.remove(item)
+                            # Update the order quantity
+                            order_quantity -= 1
+                
+                            if order_quantity == 0:
+                                break
+
+                # save_stock_data_to_json(stock_loader.objects)            
+                print(f"{colors.ANSI_RESET}{'%' * 150}")
+                print(f"\n{' ' * 50}{colors.ANSI_GREEN}Order placed: "
+                      f"{total_item_count_in_warehouses} * "
+                      f"{search_item}{colors.ANSI_RESET}\n")
+                print(f"{'%' * 150}")
+                actions.append(f"Ordered {total_item_count_in_warehouses} of {search_item}")
+
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+STOCK_JSON_PATH = os.path.join(BASE_DIR, "data", "stock.json")
+
+# def save_stock_data_to_json(stock):
+#     BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+#     stock_json = os.path.join(BASE_DIR, "data/stock.json")
+
+#     stock_data = {"stock": []}
+
+#     for warehouse in stock:
+#         for item in warehouse.stock:
+#             item_dict = {
+#                 "category": item.category,
+#                 "state": item.state,
+#                 "quantity": item.quantity,
+#                 "warehouse": warehouse.warehouse_id,
+#             }
+#             stock_data["stock"].append(item_dict)
+
+#     with open(stock_json, "w+") as json_file:
+#         json_file.seek(0)
+#         json_file.write(json.dumps(stock_data))
+
+
+# def save_stock_data_to_json():
+#     BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+#     stock_json=os.path.join(BASE_DIR, "data/stock.json")
+#     if os.path.isfile(stock_json):
+#         with open(stock_json, "w+") as jsonFile:
+#             jsonFile.seek(0)
+#             jsonFile.write(json.dumps(stock))
+
+# def save_stock_data_to_json(stock):
+#     BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+#     stock_json = os.path.join(BASE_DIR, "data/stock.json")
+
+#     stock_data = {"stock": []}
+
+#     for warehouse in stock:
+#         for item in warehouse.stock:
+#             item_dict = {
+#                 "category": item.category,
+#                 "state": item.state,
+#                 "quantity": item.quantity,
+#                 "warehouse": warehouse.warehouse_id,
+#             }
+#             stock_data["stock"].append(item_dict)
+
+#     with open(stock_json, "w+") as json_file:
+#         json_file.seek(0)
+#         json_file.write(json.dumps(stock_data))
 
 
 def category_selection(actions, authorized_employee):
@@ -336,14 +392,26 @@ def select_operation(user_input=input):
         Function to use for receiving user input (for testing purposes).
     return: User's menu selection.
     """
-    print("Main Menu:")
-    print("1. List items by warehouse")
-    print("2. Search an item and place an order")
-    print("3. Browse by category")
-    print("4. Quit")
+    try:
+        print("Main Menu:")
+        print("1. List items by warehouse")
+        print("2. Search an item and place an order")
+        print("3. Browse by category")
+        print("4. Quit")
 
-    return user_input("Enter your selection (1-4): ")
+        user_selection = user_input("Enter your selection (1-4): ")
 
+        # Attempt to convert the user input to an integer
+        selection = int(user_selection)
+
+        if 1 <= selection <= 4:
+            return str(selection)
+        else:
+            print(f"{colors.ANSI_RED}Invalid input! Please enter a number between 1 and 4.{colors.ANSI_RESET}")
+            return select_operation(user_input=user_input)
+    except ValueError:
+        print(f"{colors.ANSI_RED}Invalid input! Please enter a valid number.{colors.ANSI_RESET}")
+        return select_operation(user_input=user_input)
 
 def item_list_by_warehouse():
     """List items by warehouse."""
@@ -460,18 +528,48 @@ def run(actions, authorized_employee=None, user_input=input):
 
 
 def start_shopping():
-    """Start the shopping application."""
+    """Starts the shopping application."""
     actions = []
     username = get_user_name()
     authorized_employee = user_authentication(username)
+
+    # Determine the log file path based on the authorized_employee type
+    if isinstance(authorized_employee, User):
+        log_file = "log/user_log.txt"
+    elif isinstance(authorized_employee, Employee):
+        log_file = "log/employee_log.txt"
+    # Handle the case where neither User nor Employee is authenticated
+    else:
+        print("Unexpected authorized_employee type:", type(authorized_employee))
+        return
+
+    # Create the log directory if it doesn't exist
+    os.makedirs(os.path.dirname(log_file), exist_ok=True)
+
     run(actions, authorized_employee, user_input=input)
 
     print()
 
-    if isinstance(authorized_employee, User):
+    actions = [i + " " + "\n" for i in actions]
+    BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+    if isinstance(authorized_employee, Employee):
         authorized_employee.bye(actions)
-    elif isinstance(authorized_employee, Employee):
+        employee_log_path = os.path.join(BASE_DIR, "log/employee_log.txt")
+        with open(employee_log_path, 'a') as file1:
+            for action in actions:
+                log_entry = f"{username}. {action.strip()}. {timestamp}.\n"
+                file1.write(log_entry)
+
+    else:
         authorized_employee.bye(actions)
+        user_log_path = os.path.join(BASE_DIR, "log/user_log.txt")
+        with open(user_log_path, 'a') as file1:
+            for action in actions:
+                log_entry = f"{username}. {action.strip()}. {timestamp}.\n"
+                file1.write(log_entry)
 
 
-start_shopping()
+if __name__=="__main__":
+    start_shopping()
