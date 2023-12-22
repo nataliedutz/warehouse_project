@@ -13,7 +13,7 @@ if __name__ == "__main__":
     with open(personnel_file_path, 'w') as personnel_file:
         json.dump(personnel, personnel_file)
 
-    # Save stock data to JSON file
+    #Save stock data to JSON file
     stock_file_path = os.path.join(data_directory, 'stock.json')
     with open(stock_file_path, 'w') as stock_file:
         json.dump(stock, stock_file)
