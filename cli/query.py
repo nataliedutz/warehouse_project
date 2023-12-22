@@ -24,7 +24,7 @@ class AuthenticationError(Exception):
     """
     Exception raised for authentication errors during user login.
 
-    This exception can be raised when there is
+    This exception is raised when there is
     an issue with user authentication.
     """
 
